@@ -1,2 +1,2 @@
-# ReplayPuller
+# RLReplays
 An app for finding, naming, and downloading Rocket League replays!
