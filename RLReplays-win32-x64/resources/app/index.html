@@ -1,0 +1,117 @@
+<html>
+    <head>
+        <link type="text/css" rel="stylesheet" href="./styles/home.css" />
+    </head>
+    <body>
+        <img id="header-img" src='./rlreplays.ico' width="100px" height="100px"/>
+        <h1 id="header">&nbsp;RLReplays</h1><br>
+        <p style="margin-top: -10px;">Removing the hassle of sharing replays.</p>
+        <span id="right"><input type="text" id="filter" />&nbsp;<button id="upload" onclick="filter()">Filter</button></span>
+        <br>
+        <p class="indent" id="info">Below, you can view your replays. Not showing up? Visit the <a href="https://github.com/AEJester/RLReplays">GitHub page.</a></p>
+        <div class="indent" id="replays">
+        </div>
+        <button id="load" onclick="load()">Load Replays</button>
+    </body>
+    <script>
+    function load() {
+        let backup;
+        document.getElementById("replays").innerHTML = "";
+        let returnable = [];
+        let baseStr = '<div id="replay"><span id="name"><b><span id="rename-in-{replayname}" contenteditable="true">[name]</span></b>.replay (click to edit)<br>Date Modified: {time}</span><span class="{}" id="right"><button id="download" onclick="download(this)">Download</button>&nbsp;<button id="rename" onclick="rename(this)">Rename</button></span></div><hr>';
+        const homedir = require('os').homedir();
+        const fs = require("fs");
+        const settings = JSON.parse(fs.readFileSync(__dirname+"/settings.json", "utf8"));
+        let path = homedir+settings.replays_path
+        fs.readdir(path, (err, items) => {
+            backup = [...items];
+            let named = fs.readFileSync(__dirname+"/replaynames.txt", "utf8");
+            named = named.split("\n");
+            for (let i = 0; i < items.length; i++) {
+                for (let x = 0; x < named.length; x++) {
+                    if (items[i].replace(".replay", "") == named[x].split("|")[0]) {
+                        items[i] = named[x].split("|")[1]
+                    }
+                }
+            } 
+            console.log(backup)
+            for (let i = 0; i < items.length; i++) {
+                let stats = fs.statSync(homedir+settings.replays_path+"\\"+backup[i].replace(".replay", "")+".replay")
+                let x = baseStr.replace("[name]", items[i].replace(".replay", ""));
+                x = x.replace("{}", backup[i].replace(".replay", ""))
+                x = x.replace("{time}", stats.mtime)
+                x = x.replace("{replayname}", backup[i].replace(".replay", ""))
+                returnable.push(x)
+            }
+            let formatted = returnable;
+            for (let i = 0; i < formatted.length; i++) {
+                document.getElementById("replays").innerHTML += formatted[i];
+            }
+        })
+    }
+    function filter() {
+        let final = [];
+        let searchable = document.getElementById("replays").innerHTML;
+        document.getElementById("replays").innerHTML = "";
+        searchable = searchable.split("<hr>")
+        console.log(searchable)
+        let term = document.getElementById("filter").value;
+        term = term.replace("\"", "")
+        term = term.replace("\"", "")
+        console.log(term)
+        for (let i = 0; i < searchable.length; i++) {
+            if (searchable[i].includes(term)) {
+                console.log("here")
+                document.getElementById("replays").innerHTML += searchable[i]
+            }
+        }
+    }
+    function rename(elem) {
+        const fs = require("fs");
+        let replayName = elem.parentNode.className;
+        let inName = document.getElementById("rename-in-"+replayName).innerHTML;
+        let named = fs.readFileSync(__dirname+"/replaynames.txt", "utf8");
+        named = named.split("\n");
+        let found = false;
+        let index = 0;
+        for (let i = 0; i < named.length; i++) {
+            if (named[i].split("|")[0] == replayName) {
+                found = true;
+                index = i;
+            }
+        }
+        if (found == true) {
+            named.splice(index, 1)
+            named.push(replayName+"|"+inName)
+        } else {
+            named.push(replayName+"|"+inName)
+        }
+        let x = named.join("\n");
+        fs.writeFileSync(__dirname+"/replaynames.txt", x)
+    }
+    function download(elem) {
+        const homedir = require('os').homedir();
+        const fs = require("fs");
+        const settings = JSON.parse(fs.readFileSync(__dirname+"/settings.json", "utf8"));
+        let path = homedir+settings.replays_path
+        let basestr = '<!DOCTYPE html><html><head></head><body>Click <a href="{}">here</a> to download the <b>{name}</b>.replay file.</body></html>';
+        let replayName = elem.parentNode.className;
+        let x = basestr.replace("{}", "file://"+path+"\\"+replayName+".replay")
+        x = x.replace("{name}", replayName)
+
+        let writeStream = fs.createWriteStream(__dirname+'/download.html');
+
+        // write some data with a base64 encoding
+        writeStream.write(x, 'utf8');
+
+        // the finish event is emitted when all data has been flushed from the stream
+        writeStream.on('finish', () => {  
+            console.log('wrote all data to file');
+        });
+
+        // close the stream
+        writeStream.end();
+        require("electron").shell.openExternal("file://"+__dirname+"/download.html")  
+    }
+    </script>
+</html>

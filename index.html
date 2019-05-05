@@ -21,11 +21,11 @@
         let baseStr = '<div id="replay"><span id="name"><b><span id="rename-in-{replayname}" contenteditable="true">[name]</span></b>.replay (click to edit)<br>Date Modified: {time}</span><span class="{}" id="right"><button id="download" onclick="download(this)">Download</button>&nbsp;<button id="rename" onclick="rename(this)">Rename</button></span></div><hr>';
         const homedir = require('os').homedir();
         const fs = require("fs");
-        const settings = JSON.parse(fs.readFileSync("./settings.json", "utf8"));
+        const settings = JSON.parse(fs.readFileSync(__dirname+"/settings.json", "utf8"));
         let path = homedir+settings.replays_path
         fs.readdir(path, (err, items) => {
             backup = [...items];
-            let named = fs.readFileSync("./replaynames.txt", "utf8");
+            let named = fs.readFileSync(__dirname+"/replaynames.txt", "utf8");
             named = named.split("\n");
             for (let i = 0; i < items.length; i++) {
                 for (let x = 0; x < named.length; x++) {
@@ -70,7 +70,7 @@
         const fs = require("fs");
         let replayName = elem.parentNode.className;
         let inName = document.getElementById("rename-in-"+replayName).innerHTML;
-        let named = fs.readFileSync("./replaynames.txt", "utf8");
+        let named = fs.readFileSync(__dirname+"/replaynames.txt", "utf8");
         named = named.split("\n");
         let found = false;
         let index = 0;
@@ -87,12 +87,12 @@
             named.push(replayName+"|"+inName)
         }
         let x = named.join("\n");
-        fs.writeFileSync("./replaynames.txt", x)
+        fs.writeFileSync(__dirname+"/replaynames.txt", x)
     }
     function download(elem) {
         const homedir = require('os').homedir();
         const fs = require("fs");
-        const settings = JSON.parse(fs.readFileSync("./settings.json", "utf8"));
+        const settings = JSON.parse(fs.readFileSync(__dirname+"/settings.json", "utf8"));
         let path = homedir+settings.replays_path
         let basestr = '<!DOCTYPE html><html><head></head><body>Click <a href="{}">here</a> to download the <b>{name}</b>.replay file.</body></html>';
         let replayName = elem.parentNode.className;
